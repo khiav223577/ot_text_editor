@@ -1,0 +1,16 @@
+---
+rails_max_threads: 128
+time_zone: Taipei
+cors_origins:
+- ! '*'
+mailer_from: Support <support@mg.example.com
+mailer_server_host: api.example.com
+mailer_server_port: 
+mailer_server_protocol: https
+mailer_smtp_address: smtp.mailgun.org
+mailer_smtp_port: 587
+mailer_smtp_domain: mg.example.com
+mailer_smtp_authentication: plain
+mailer_smtp_enable_starttls_auto: true
+mailer_smtp_user_name: postmaster@mg.example.com
+mailer_smtp_password: 
