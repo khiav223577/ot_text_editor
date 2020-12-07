@@ -6,8 +6,16 @@ AllCops:
   DisabledByDefault: true
   Exclude:
     - bin/*
+    - app/assets/**/*
+    - app/javascript/**/*
+    - spec/fixtures/**/*
     - db/migrate/*.rb
     - db/schema.rb
+    - tmp/**/*
+    - vendor/**/*
+    - .git/**/*
+    - node_modules/**/*
+    - public/**/*
     - Gemfile
     - config.ru
     - Rakefile
@@ -184,7 +192,7 @@ Lint/UselessAssignment:
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#underscore-unused-vars'
   Enabled: true
 
-Lint/UselessComparison:
+Lint/BinaryOperatorWithIdenticalOperands:
   Description: 'Checks for comparison of something with itself.'
   Enabled: true
 
@@ -1123,7 +1131,7 @@ Style/SymbolProc:
   Description: 'Use symbols as procs instead of blocks when possible.'
   Enabled: true
 
-Layout/Tab:
+Layout/IndentationStyle:
   Description: 'No hard tabs.'
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#spaces-indentation'
   Enabled: true

@@ -51,6 +51,8 @@ gem 'redis'
 gem 'redis-objects'
 gem 'rails-erd', group: :development
 gem 'rubocop', require: false
+gem 'rubocop-performance', require: false
+gem 'rubocop-rails', require: false
 gem 'bcrypt'
 gem 'benchmark-ips', group: :development
 gem 'rspec-rails', group: [:development, :test]
