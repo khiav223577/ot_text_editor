@@ -1,4 +1,4 @@
-require "rake"
+require 'rake'
 
 RSpec.configure do |config|
   # Tag Rake specs with `:task` metadata or put them in the spec/tasks dir

@@ -6,8 +6,8 @@ module RequestHelper
     send_request
     JSON.parse(response.body)
   end
-  subject(:response_data) { response_body["data"] }
-  subject(:response_errors) { response_body["errors"] }
+  subject(:response_data){ response_body['data'] }
+  subject(:response_errors){ response_body['errors'] }
 
   def file_fixture(filename)
     "#{Rails.root}/spec/fixtures/#{filename}"
@@ -35,8 +35,8 @@ module RequestHelper
 
   def request_to(uri, params: {}, headers: {})
     api_headers = {
-      "ACCEPT"      => "application/json",
-      "HTTP_ACCEPT" => "application/json"
+      'ACCEPT'      => 'application/json',
+      'HTTP_ACCEPT' => 'application/json',
     }
     api_headers.merge!(@api_headers_with_auth || {})
     api_headers.merge!(headers)
@@ -52,7 +52,7 @@ module RequestHelper
     JSON.parse(response.body)
   end
 
-  def expect_response_header(status, content_type = "application/json")
+  def expect_response_header(status, content_type = 'application/json')
     send_request
     expect(response).to have_http_status status
     expect(response.content_type).to eq content_type

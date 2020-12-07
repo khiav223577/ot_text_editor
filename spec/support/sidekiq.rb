@@ -1,4 +1,4 @@
-require "sidekiq/testing"
+require 'sidekiq/testing'
 
 RSpec::Sidekiq.configure do |config|
   # Clears all job queues before each example

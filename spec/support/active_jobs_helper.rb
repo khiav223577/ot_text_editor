@@ -8,7 +8,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each, :inline_jobs) do |example|
-    JobTestHelper.new.perform_enqueued_jobs { example.run }
+    JobTestHelper.new.perform_enqueued_jobs{ example.run }
   end
 
   config.after do

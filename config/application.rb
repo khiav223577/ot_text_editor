@@ -1,15 +1,15 @@
 require_relative 'boot'
 
-require "rails"
+require 'rails'
 # Pick the frameworks you want:
-require "active_model/railtie"
-require "active_job/railtie"
-require "active_record/railtie"
-require "active_storage/engine"
-require "action_controller/railtie"
-require "action_mailer/railtie"
-require "action_view/railtie"
-require "action_cable/engine"
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'active_storage/engine'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
+require 'action_view/railtie'
+require 'action_cable/engine'
 # require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 
@@ -26,21 +26,21 @@ module OtTextEditor
       authentication: Settings.mailer_smtp_authentication,
       enable_starttls_auto: Settings.mailer_smtp_enable_starttls_auto,
       user_name: Settings.mailer_smtp_user_name,
-      password: Settings.mailer_smtp_password
+      password: Settings.mailer_smtp_password,
     }
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.raise_delivery_errors = true
     config.action_mailer.default_url_options = {
       host: Settings.mailer_server_host,
       port: Settings.mailer_server_port,
-      protocol: Settings.mailer_server_protocol
+      protocol: Settings.mailer_server_protocol,
     }
     config.middleware.use Rack::Cors do
       allow do
         origins Settings.cors_origins
-        resource "*",
+        resource '*',
                  headers: :any,
-                 expose: ["access-token", "expiry", "token-type", "uid", "client"],
+                 expose: %w[access-token expiry token-type uid client],
                  methods: [:get, :post, :options, :delete, :put]
       end
     end
