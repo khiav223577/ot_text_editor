@@ -3,7 +3,7 @@ rails_max_threads: 128
 time_zone: Taipei
 cors_origins:
 - ! '*'
-mailer_from: Support <support@mg.example.com
+mailer_from: Support <support@mg.example.com>
 mailer_server_host: api.example.com
 mailer_server_port: 
 mailer_server_protocol: https
