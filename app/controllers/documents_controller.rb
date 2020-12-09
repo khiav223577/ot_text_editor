@@ -28,6 +28,12 @@ class DocumentsController < ActionController::Base
     $operations << client_operation
     $value = client_operation.apply($value)
 
+    ActionCable.server.broadcast(
+      'document_channel',
+      revision: server_revision + 1,
+      ops: client_operation.ops
+    )
+
     render json: {
       data: {
         revision: server_revision + 1,

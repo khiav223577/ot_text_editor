@@ -39,6 +39,8 @@
     return deepTransform(leftOperations.slice(1, leftOperations.length), newRightOperations)
   }
 
+  const cable = ActionCable.createConsumer()
+
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
     const textRef = React.useRef(props.defaultText)
@@ -48,15 +50,29 @@
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
 
     React.useEffect(() => {
-      const interval = setInterval(() => {
-        const params = { revision: revisionRef.current }
+      const channel = cable.subscriptions.create('DocumentChannel', {
+        connected: () => console.log('connected'),
+        disconnected: () => console.log('disconnected'),
+        received: function(data){
+          sync(data.ops, null, data.revision)
+        }
+      });
 
-        $.get('/documents/operation', params, ({ data } ) => {
-          if (data.ops) sync(data.ops, null, params.revision + 1)
-        })
-      }, 3000);
-      return () => clearInterval(interval);
-    }, []);
+      return () => {
+        channel.unsubscribe()
+      }
+    }, [])
+
+    // React.useEffect(() => {
+    //   const interval = setInterval(() => {
+    //     const params = { revision: revisionRef.current }
+    //
+    //     $.get('/documents/operation', params, ({ data } ) => {
+    //       if (data.ops) sync(data.ops, null, params.revision + 1)
+    //     })
+    //   }, 3000);
+    //   return () => clearInterval(interval);
+    // }, []);
 
     function doSendChanges(onSuccess) {
       const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
