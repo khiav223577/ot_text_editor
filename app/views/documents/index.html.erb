@@ -1,6 +1,32 @@
 <h3>Editor Demo</h3>
 
 <script type="text/babel">
+  function generateOps(text, newText) {
+    var commonStart = 0
+    var commonEnd = 0
+    var ops = []
+
+    while (text.charAt(commonStart) === newText.charAt(commonStart)) commonStart++
+
+    while (text.charAt(text.length - 1 - commonEnd) === newText.charAt(newText.length - 1 - commonEnd) &&
+    commonEnd + commonStart < text.length && commonEnd + commonStart < newText.length) {
+      commonEnd++
+    }
+
+    if (commonStart > 0) ops.push({ action: 'retain', value: commonStart })
+
+    if (text.length !== commonStart + commonEnd) {
+      ops.push({ action: 'delete', value: text.length - commonStart - commonEnd })
+    }
+
+    if (newText.length !== commonStart + commonEnd) {
+      ops.push({ action: 'insert', value: newText.slice(commonStart, newText.length - commonEnd) })
+    }
+
+    if (commonEnd > 0) ops.push({ action: 'retain', value: commonEnd })
+    return ops
+  }
+
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
     let currentSelection = [0, 0]
@@ -11,32 +37,8 @@
 
     function onChange(e) {
       var newText = e.target.value
-      var commonStart = 0
-      var commonEnd = 0
-      var ops = []
-      
-      while (text.charAt(commonStart) === newText.charAt(commonStart)) commonStart++
-
-      while (text.charAt(text.length - 1 - commonEnd) === newText.charAt(newText.length - 1 - commonEnd) &&
-      commonEnd + commonStart < text.length && commonEnd + commonStart < newText.length) {
-        commonEnd++
-      }
-
-      if (commonStart > 0) ops.push({ action: 'retain', value: commonStart })
-
-      if (text.length !== commonStart + commonEnd) {
-        ops.push({ action: 'delete', value: text.length - commonStart - commonEnd })
-      }
-
-      if (newText.length !== commonStart + commonEnd) {
-        ops.push({ action: 'insert', value: newText.slice(commonStart, newText.length - commonEnd) })
-      }
-
-      if (commonEnd > 0) ops.push({ action: 'retain', value: commonEnd })
-
+      console.log(generateOps(text, newText))
       setText(newText)
-
-      console.log(ops)
     }
 
     return (
