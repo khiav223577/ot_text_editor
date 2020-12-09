@@ -48,8 +48,6 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
       sendChanges(newText, revision, response => {
-        console.log(response)
-        console.log(revision)
         setRevision(response.data.revision)
         operationRef.current = new ot.TextOperation().retain(newText.length)
       })
