@@ -2,20 +2,51 @@
 
 <script type="text/babel">
   function Editor(props) {
-    const [text, setText] = React.useState(props.defaultText);
+    const [text, setText] = React.useState(props.defaultText)
+    let currentSelection = [0, 0]
+
+    function onSelect(e) {
+      currentSelection = [e.target.selectionStart, e.target.selectionEnd]
+    }
 
     function onChange(e) {
-      setText(e.target.value)
+      var newText = e.target.value
+      var commonStart = 0
+      var commonEnd = 0
+      var ops = []
+      
+      while (text.charAt(commonStart) === newText.charAt(commonStart)) commonStart++
+
+      while (text.charAt(text.length - 1 - commonEnd) === newText.charAt(newText.length - 1 - commonEnd) &&
+      commonEnd + commonStart < text.length && commonEnd + commonStart < newText.length) {
+        commonEnd++
+      }
+
+      if (commonStart > 0) ops.push({ action: 'retain', value: commonStart })
+
+      if (text.length !== commonStart + commonEnd) {
+        ops.push({ action: 'delete', value: text.length - commonStart - commonEnd })
+      }
+
+      if (newText.length !== commonStart + commonEnd) {
+        ops.push({ action: 'insert', value: newText.slice(commonStart, newText.length - commonEnd) })
+      }
+
+      if (commonEnd > 0) ops.push({ action: 'retain', value: commonEnd })
+
+      setText(newText)
+
+      console.log(ops)
     }
 
     return (
-      <textarea style={{ width: '100%', height: 400 }} value={text} onChange={onChange}/>
-    );
+      <textarea style={{ width: '100%', height: 400 }} value={text} onSelect={onSelect} onChange={onChange}/>
+    )
   }
 
   ReactDOM.render(
     <Editor defaultText='<%= j @text.html_safe %>'/>,
     document.getElementById('root'),
-  );
+  )
 
 </script>
