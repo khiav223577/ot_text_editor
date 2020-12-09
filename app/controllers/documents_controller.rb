@@ -3,6 +3,7 @@ class DocumentsController < ActionController::Base
   $value = 'Hello, world!'
 
   def index
+    @text = $value
     respond_to do |format|
       format.html
     end
