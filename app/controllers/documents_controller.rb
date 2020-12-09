@@ -31,7 +31,7 @@ class DocumentsController < ActionController::Base
 
     render json: {
       data: {
-        revision: server_revision,
+        revision: server_revision + 1,
         operations: client_operation.to_a,
       }
     }
