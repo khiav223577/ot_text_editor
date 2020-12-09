@@ -30,6 +30,7 @@
       let newLeftOperation = ot.TextOperation.transform(leftOperation, rightOperation)[0]
       let newRightOperation = ot.TextOperation.transform(rightOperation, leftOperation)[0]
 
+      newLeftOperation.prev = leftOperation
       leftOperation = newLeftOperation
       return newRightOperation
     })
@@ -40,13 +41,11 @@
 
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
-    const textRef = React.useRef(text)
+    const textRef = React.useRef(props.defaultText)
     const revisionRef = React.useRef(Number(props.revision))
     const disableSync = React.useRef(false)
 
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
-
-    React.useEffect(() => { textRef.current = text }, [text])
 
     React.useEffect(() => {
       const interval = setInterval(() => {
@@ -94,16 +93,18 @@
       if (disableSync.current) return
       if (revisionRef.current >= newRevision) return
 
+      if (requestOps) textRef.current = ot.TextOperation.fromJSON(requestOps).apply(textRef.current)
+
       if (missionOps) {
         let composed = deepTransform(
           [ot.TextOperation.fromJSON(missionOps)],
           requestOps ? [ot.TextOperation.fromJSON(requestOps), operationRef.current] : [operationRef.current],
         )
-
         operationRef.current = composed[1]
-        setText(composed[0].apply(textRef.current))
+        textRef.current = composed[0].prev.apply(textRef.current)
       }
 
+      setText(operationRef.current.apply(textRef.current))
       revisionRef.current = newRevision
     }
 
