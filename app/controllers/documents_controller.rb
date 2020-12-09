@@ -22,7 +22,7 @@ class DocumentsController < ActionController::Base
 
     if server_revision > client_revision
       mission_operation = compose_all($operations[client_revision..server_revision])
-      client_operation = OT::TextOperation.transform(client_operation, mission_operation).first
+      client_operation = OT::TextOperation.transform(mission_operation, client_operation)[1] # transform 時，比較早的操作參數要在前
     end
 
     $operations << client_operation

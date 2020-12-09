@@ -27,10 +27,11 @@
     let leftOperation = leftOperations[0]
 
     let newRightOperations = rightOperations.map((rightOperation) => {
-      let composed = ot.TextOperation.transform(leftOperation, rightOperation)
+      let newLeftOperation = ot.TextOperation.transform(leftOperation, rightOperation)[0]
+      let newRightOperation = ot.TextOperation.transform(rightOperation, leftOperation)[0]
 
-      leftOperation = composed[0]
-      return composed[1]
+      leftOperation = newLeftOperation
+      return newRightOperation
     })
 
     if (leftOperations.length === 1) return [leftOperation, newRightOperations[newRightOperations.length - 1]]
