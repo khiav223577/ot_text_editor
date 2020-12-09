@@ -1,5 +1,7 @@
 class DocumentsController < ActionController::Base
   skip_before_action :verify_authenticity_token
+  before_action :should_have_valid_ops, only: :update
+  before_action :should_have_valid_revision, only: :update
 
   $operations = []
   $value = 'Hello, world!'
@@ -13,11 +15,8 @@ class DocumentsController < ActionController::Base
   end
 
   def update
-    return render_error('invalid params') if not params[:ops].is_a?(Array)
-    return render_error('invalid params') if params[:ops].empty?
-
-    client_revision = params[:revision].to_i
-    client_operation = OT::TextOperation.from_a(params[:ops])
+    client_revision = @revision
+    client_operation = OT::TextOperation.from_a(@ops)
     server_revision = $operations.size
 
     if server_revision > client_revision
@@ -51,6 +50,18 @@ class DocumentsController < ActionController::Base
   end
 
   private
+
+  def should_have_valid_ops
+    @ops = params[:ops]
+    return render_error('invalid params') if not @ops.is_a?(Array)
+    return render_error('invalid params') if @ops.empty?
+  end
+
+  def should_have_valid_revision
+    @revision = params[:revision].to_i
+    return render_error('invalid params') if @revision < 0
+    return render_error('invalid params') if @revision > $operations.size
+  end
 
   def render_error(*errors, status: :bad_request)
     render json: { errors: errors }, status: status
