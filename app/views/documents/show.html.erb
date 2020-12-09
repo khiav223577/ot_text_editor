@@ -58,10 +58,10 @@
       return () => clearInterval(interval);
     }, []);
 
-    function doSendChanges(newText, onSuccess) {
+    function doSendChanges(onSuccess) {
       const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
 
-      operationRef.current = new ot.TextOperation().retain(newText.length)
+      operationRef.current = new ot.TextOperation().retain(operationRef.current.apply(textRef.current).length)
       disableSync.current = true // 先暫停更新，避免重複更新
 
       $.ajax({
@@ -86,7 +86,7 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
 
-      sendChanges(newText, ({ data }, requestOps) => { sync(data.missing_ops, requestOps, data.revision) })
+      sendChanges(({ data }, requestOps) => { console.log('type'); sync(data.missing_ops, requestOps, data.revision) })
     }
 
     function sync(missionOps, requestOps, newRevision) {
