@@ -4,7 +4,7 @@
   function generateOperation(text, newText) {
     var commonStart = 0
     var commonEnd = 0
-    var operation = ot.TextOperation()
+    var operation = new ot.TextOperation()
 
     while (text.charAt(commonStart) === newText.charAt(commonStart)) commonStart++
 
@@ -25,20 +25,24 @@
 
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
-    let currentSelection = [0, 0]
+    let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
 
-    function onSelect(e) {
-      currentSelection = [e.target.selectionStart, e.target.selectionEnd]
-    }
+    const sendChanges = React.useRef(
+      _.debounce(newText => {
+        console.log(operationRef.current.toJSON())
+        operationRef.current = new ot.TextOperation().retain(newText.length)
+      }, 200)
+    ).current
 
     function onChange(e) {
       var newText = e.target.value
-      console.log(generateOperation(text, newText))
+      operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
+      sendChanges(newText)
     }
 
     return (
-      <textarea style={{ width: '100%', height: 400 }} value={text} onSelect={onSelect} onChange={onChange}/>
+      <textarea style={{ width: '100%', height: 400 }} value={text} onChange={onChange}/>
     )
   }
 
