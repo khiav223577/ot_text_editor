@@ -39,9 +39,23 @@
 
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
-    const [revision, setRevision] = React.useState(Number(props.revision))
+    const textRef = React.useRef(text)
+    const revisionRef = React.useRef(Number(props.revision))
 
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
+
+    React.useEffect(() => { textRef.current = text }, [text])
+
+    React.useEffect(() => {
+      const interval = setInterval(() => {
+        const params = { revision: revisionRef.current }
+
+        $.get('/documents/operation', params, ({ data } ) => {
+          if (data.ops) sync(data.ops, null, params.revision + 1)
+        })
+      }, 3000);
+      return () => clearInterval(interval);
+    }, []);
 
     function doSendChanges(newText, params, onSuccess) {
       operationRef.current = new ot.TextOperation().retain(newText.length)
@@ -65,20 +79,24 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
 
-      const params = { revision, ops: operationRef.current.toJSON() }
-      sendChanges(newText, params, ({ data }) => {
-        if (data.missing_ops) {
-          let composed = deepTransform(
-            [ot.TextOperation.fromJSON(data.missing_ops)],
-            [ot.TextOperation.fromJSON(params.ops), operationRef.current]
-          )
+      const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
+      sendChanges(newText, params, ({ data }) => { sync(data.missing_ops, params.ops, data.revision) })
+    }
 
-          operationRef.current = composed[1]
-          setText(composed[0].apply(newText))
-        }
+    function sync(missionOps, requestOps, newRevision) {
+      if (revisionRef.current >= newRevision) return
 
-        setRevision(data.revision)
-      })
+      if (missionOps) {
+        let composed = deepTransform(
+          [ot.TextOperation.fromJSON(missionOps)],
+          requestOps ? [ot.TextOperation.fromJSON(requestOps), operationRef.current] : [operationRef.current],
+        )
+
+        operationRef.current = composed[1]
+        setText(composed[0].apply(textRef.current))
+      }
+
+      revisionRef.current = newRevision
     }
 
     return (
