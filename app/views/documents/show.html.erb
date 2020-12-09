@@ -42,6 +42,7 @@
     const [text, setText] = React.useState(props.defaultText)
     const textRef = React.useRef(text)
     const revisionRef = React.useRef(Number(props.revision))
+    const disableSync = React.useRef(false)
 
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
 
@@ -58,8 +59,11 @@
       return () => clearInterval(interval);
     }, []);
 
-    function doSendChanges(newText, params, onSuccess) {
+    function doSendChanges(newText, onSuccess) {
+      const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
+
       operationRef.current = new ot.TextOperation().retain(newText.length)
+      disableSync.current = true // 先暫停更新，避免重複更新
 
       $.ajax({
         url: '/documents',
@@ -68,7 +72,10 @@
           "Content-Type": "application/json",
         },
         data: JSON.stringify(params),
-        success: onSuccess,
+        success: response => {
+          disableSync.current = false
+          onSuccess(response, params.ops)
+        },
       });
     }
 
@@ -80,11 +87,11 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
 
-      const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
-      sendChanges(newText, params, ({ data }) => { sync(data.missing_ops, params.ops, data.revision) })
+      sendChanges(newText, ({ data }, requestOps) => { sync(data.missing_ops, requestOps, data.revision) })
     }
 
     function sync(missionOps, requestOps, newRevision) {
+      if (disableSync.current) return
       if (revisionRef.current >= newRevision) return
 
       if (missionOps) {
