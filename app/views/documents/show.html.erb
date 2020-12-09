@@ -23,6 +23,20 @@
     return operation
   }
 
+  function deepTransform(leftOperations, rightOperations) {
+    let leftOperation = leftOperations[0]
+
+    let newRightOperations = rightOperations.map((rightOperation) => {
+      let composed = ot.TextOperation.transform(leftOperation, rightOperation)
+
+      leftOperation = composed[0]
+      return composed[1]
+    })
+
+    if (leftOperations.length === 1) return [leftOperation, newRightOperations[newRightOperations.length - 1]]
+    return deepTransform(leftOperations.slice(1, leftOperations.length), newRightOperations)
+  }
+
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
     const [revision, setRevision] = React.useState(Number(props.revision))
@@ -54,17 +68,13 @@
       const params = { revision, ops: operationRef.current.toJSON() }
       sendChanges(newText, params, ({ data }) => {
         if (data.missing_ops) {
-          let missionOperation = ot.TextOperation.fromJSON(data.missing_ops)
-          let requestOperation = ot.TextOperation.fromJSON(params.ops)
+          let composed = deepTransform(
+            [ot.TextOperation.fromJSON(data.missing_ops)],
+            [ot.TextOperation.fromJSON(params.ops), operationRef.current]
+          )
 
-          let composed2 = ot.TextOperation.transform(missionOperation, requestOperation)
-          let missionOperation2 = composed2[0]
-
-          let composed3 = ot.TextOperation.transform(missionOperation2, operationRef.current)
-          let missionOperation3 = composed3[0]
-          operationRef.current = composed3[1]
-
-          setText(missionOperation3.apply(newText))
+          operationRef.current = composed[1]
+          setText(composed[0].apply(newText))
         }
 
         setRevision(data.revision)
