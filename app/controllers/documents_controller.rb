@@ -2,7 +2,8 @@ class DocumentsController < ActionController::Base
   $operations = []
   $value = 'Hello, world!'
 
-  def index
+  def show
+    @revision = $operations.size
     @text = $value
     respond_to do |format|
       format.html
@@ -26,8 +27,7 @@ class DocumentsController < ActionController::Base
 
     render json: {
       data: {
-        client_revision: client_revision,
-        server_revision: server_revision,
+        revision: server_revision,
         operations: operation.to_a,
       }
     }

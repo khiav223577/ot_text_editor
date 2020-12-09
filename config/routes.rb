@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  resources :documents, only: [:index, :update]
+  resource :documents, only: [:show, :update]
 end
