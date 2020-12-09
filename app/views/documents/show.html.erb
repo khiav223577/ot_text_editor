@@ -36,9 +36,13 @@
         headers: {
           "Content-Type": "application/json",
         },
-        data: JSON.stringify({ revision, operations: operationRef.current.toJSON() }),
+        data: JSON.stringify({ revision, ops: operationRef.current.toJSON() }),
         success: onSuccess,
       });
+    }
+
+    function applyRevision(revision, operation) {
+      setRevision(revision)
     }
 
     const sendChanges = React.useRef(_.debounce(doSendChanges, 200)).current
@@ -48,7 +52,7 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
       sendChanges(newText, revision, response => {
-        setRevision(response.data.revision)
+        applyRevision(response.data.revision, ot.TextOperation.fromJSON(response.data.ops))
         operationRef.current = new ot.TextOperation().retain(newText.length)
       })
     }

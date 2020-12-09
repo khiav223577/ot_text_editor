@@ -13,11 +13,11 @@ class DocumentsController < ActionController::Base
   end
 
   def update
-    return render_error('invalid params') if not params[:operations].is_a?(Array)
-    return render_error('invalid params') if params[:operations].empty?
+    return render_error('invalid params') if not params[:ops].is_a?(Array)
+    return render_error('invalid params') if params[:ops].empty?
 
     client_revision = params[:revision].to_i
-    client_operation = OT::TextOperation.from_a(params[:operations])
+    client_operation = OT::TextOperation.from_a(params[:ops])
     server_revision = $operations.size
 
     if server_revision >= client_revision
@@ -32,7 +32,15 @@ class DocumentsController < ActionController::Base
     render json: {
       data: {
         revision: server_revision + 1,
-        operations: client_operation.to_a,
+        ops: client_operation.to_a,
+      }
+    }
+  end
+
+  def operation
+    render json: {
+      data: {
+        ops: $operations[params[:revision].to_i].to_a,
       }
     }
   end
