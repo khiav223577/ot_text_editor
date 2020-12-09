@@ -29,31 +29,46 @@
 
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
 
-    function doSendChanges(newText, revision, onSuccess) {
+    function doSendChanges(newText, params, onSuccess) {
+      operationRef.current = new ot.TextOperation().retain(newText.length)
+
       $.ajax({
         url: '/documents',
         type: 'PUT',
         headers: {
           "Content-Type": "application/json",
         },
-        data: JSON.stringify({ revision, ops: operationRef.current.toJSON() }),
+        data: JSON.stringify(params),
         success: onSuccess,
       });
-    }
-
-    function applyRevision(revision, operation) {
-      setRevision(revision)
     }
 
     const sendChanges = React.useRef(_.debounce(doSendChanges, 200)).current
 
     function onChange(e) {
-      var newText = e.target.value
+      let newText = e.target.value
+
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
-      sendChanges(newText, revision, response => {
-        applyRevision(response.data.revision, ot.TextOperation.fromJSON(response.data.ops))
-        operationRef.current = new ot.TextOperation().retain(newText.length)
+
+      const params = { revision, ops: operationRef.current.toJSON() }
+      sendChanges(newText, params, ({ data }) => {
+        if (data.missing_ops) {
+          let missionOperation = ot.TextOperation.fromJSON(data.missing_ops)
+          let requestOperation = ot.TextOperation.fromJSON(params.ops)
+
+          let composed2 = ot.TextOperation.transform(missionOperation, requestOperation)
+          let missionOperation2 = composed2[0]
+          let requestOperation2 = composed2[1]
+
+          let composed3 = ot.TextOperation.transform(missionOperation2, operationRef.current)
+          let missionOperation3 = composed3[0]
+          operationRef.current = composed3[1]
+
+          setText(missionOperation3.apply(newText))
+        }
+
+        setRevision(data.revision)
       })
     }
 
