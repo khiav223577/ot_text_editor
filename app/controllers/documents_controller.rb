@@ -20,10 +20,9 @@ class DocumentsController < ActionController::Base
     client_operation = OT::TextOperation.from_a(params[:ops])
     server_revision = $operations.size
 
-    if server_revision >= client_revision
-      $operations[client_revision..server_revision].each do |other_operation|
-        client_operation = OT::TextOperation.transform(client_operation, other_operation).first
-      end
+    if server_revision > client_revision
+      mission_operation = compose_all($operations[client_revision..server_revision])
+      client_operation = OT::TextOperation.transform(client_operation, mission_operation).first
     end
 
     $operations << client_operation
@@ -32,7 +31,7 @@ class DocumentsController < ActionController::Base
     render json: {
       data: {
         revision: server_revision + 1,
-        ops: client_operation.to_a,
+        missing_ops: mission_operation&.ops,
       }
     }
   end
@@ -49,5 +48,11 @@ class DocumentsController < ActionController::Base
 
   def render_error(*errors, status: :bad_request)
     render json: { errors: errors }, status: status
+  end
+
+  def compose_all(operations)
+    operation = operations[0]
+    operations[1..-1].each{|s| operation = operation.compose(s) }
+    return operation
   end
 end
