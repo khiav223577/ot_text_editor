@@ -39,7 +39,7 @@ class DocumentsController < ActionController::Base
   def operation
     render json: {
       data: {
-        ops: $operations[params[:revision].to_i].to_a,
+        ops: $operations[params[:revision].to_i]&.to_a,
       }
     }
   end
