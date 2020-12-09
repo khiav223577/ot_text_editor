@@ -25,20 +25,34 @@
 
   function Editor(props) {
     const [text, setText] = React.useState(props.defaultText)
+    const [revision, setRevision] = React.useState(Number(props.revision))
+
     let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
 
-    const sendChanges = React.useRef(
-      _.debounce(newText => {
-        console.log(operationRef.current.toJSON())
-        operationRef.current = new ot.TextOperation().retain(newText.length)
-      }, 200)
-    ).current
+    function doSendChanges(newText, revision, onSuccess) {
+      $.ajax({
+        url: '/documents',
+        type: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify({ revision, operations: operationRef.current.toJSON() }),
+        success: onSuccess,
+      });
+    }
+
+    const sendChanges = React.useRef(_.debounce(doSendChanges, 200)).current
 
     function onChange(e) {
       var newText = e.target.value
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
-      sendChanges(newText)
+      sendChanges(newText, revision, response => {
+        console.log(response)
+        console.log(revision)
+        setRevision(response.data.revision)
+        operationRef.current = new ot.TextOperation().retain(newText.length)
+      })
     }
 
     return (
@@ -47,7 +61,7 @@
   }
 
   ReactDOM.render(
-    <Editor defaultText='<%= j @text.html_safe %>'/>,
+    <Editor defaultText="<%= j @text.html_safe %>" revision="<%= @revision %>" />,
     document.getElementById('root'),
   )
 
