@@ -102,7 +102,7 @@
       operationRef.current = operationRef.current.compose(generateOperation(text, newText))
       setText(newText)
 
-      sendChanges(({ data }, requestOps) => { console.log('type'); sync(data.missing_ops, requestOps, data.revision) })
+      sendChanges(({ data }, requestOps) => { sync(data.missing_ops, requestOps, data.revision) })
     }
 
     function sync(missionOps, requestOps, newRevision) {
