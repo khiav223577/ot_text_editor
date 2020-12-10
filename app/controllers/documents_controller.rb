@@ -30,14 +30,14 @@ class DocumentsController < ActionController::Base
     ActionCable.server.broadcast(
       'document_channel',
       revision: server_revision + 1,
-      ops: client_operation.ops
+      ops: client_operation.ops,
     )
 
     render json: {
       data: {
         revision: server_revision + 1,
         missing_ops: mission_operation&.ops,
-      }
+      },
     }
   end
 
@@ -45,7 +45,7 @@ class DocumentsController < ActionController::Base
     render json: {
       data: {
         ops: $operations[params[:revision].to_i]&.to_a,
-      }
+      },
     }
   end
 
