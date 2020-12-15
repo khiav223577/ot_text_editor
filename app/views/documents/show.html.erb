@@ -1,0 +1,137 @@
+<h3>Editor Demo</h3>
+
+<script type="text/babel">
+  function generateOperation(text, newText) {
+    var commonStart = 0
+    var commonEnd = 0
+    var operation = new ot.TextOperation()
+
+    while (text.charAt(commonStart) === newText.charAt(commonStart)) commonStart++
+
+    while (text.charAt(text.length - 1 - commonEnd) === newText.charAt(newText.length - 1 - commonEnd) &&
+    commonEnd + commonStart < text.length && commonEnd + commonStart < newText.length) {
+      commonEnd++
+    }
+
+    if (commonStart > 0) operation.retain(commonStart)
+    if (text.length !== commonStart + commonEnd) operation.delete(text.length - commonStart - commonEnd)
+    if (newText.length !== commonStart + commonEnd) {
+      operation.insert(newText.slice(commonStart, newText.length - commonEnd))
+    }
+
+    if (commonEnd > 0) operation.retain(commonEnd)
+    return operation
+  }
+
+  function deepTransform(leftOperations, rightOperations) {
+    let leftOperation = leftOperations[0]
+
+    let newRightOperations = rightOperations.map((rightOperation) => {
+      let newLeftOperation = ot.TextOperation.transform(leftOperation, rightOperation)[0]
+      let newRightOperation = ot.TextOperation.transform(rightOperation, leftOperation)[0]
+
+      newLeftOperation.prev = leftOperation
+      leftOperation = newLeftOperation
+      return newRightOperation
+    })
+
+    if (leftOperations.length === 1) return [leftOperation, newRightOperations[newRightOperations.length - 1]]
+    return deepTransform(leftOperations.slice(1, leftOperations.length), newRightOperations)
+  }
+
+  const cable = ActionCable.createConsumer()
+
+  function Editor(props) {
+    const [text, setText] = React.useState(props.defaultText)
+    const textRef = React.useRef(props.defaultText)
+    const revisionRef = React.useRef(Number(props.revision))
+    const disableSync = React.useRef(false)
+
+    let operationRef = React.useRef(new ot.TextOperation().retain(text.length))
+
+    React.useEffect(() => {
+      const channel = cable.subscriptions.create('DocumentChannel', {
+        connected: () => console.log('connected'),
+        disconnected: () => console.log('disconnected'),
+        received: function(data){
+          sync(data.ops, null, data.revision)
+        }
+      });
+
+      return () => {
+        channel.unsubscribe()
+      }
+    }, [])
+
+    // React.useEffect(() => {
+    //   const interval = setInterval(() => {
+    //     const params = { revision: revisionRef.current }
+    //
+    //     $.get('/documents/operation', params, ({ data } ) => {
+    //       if (data.ops) sync(data.ops, null, params.revision + 1)
+    //     })
+    //   }, 3000);
+    //   return () => clearInterval(interval);
+    // }, []);
+
+    function doSendChanges(onSuccess) {
+      const params = { revision: revisionRef.current, ops: operationRef.current.toJSON() }
+
+      operationRef.current = new ot.TextOperation().retain(operationRef.current.apply(textRef.current).length)
+      disableSync.current = true // 先暫停更新，避免重複更新
+
+      $.ajax({
+        url: '/documents',
+        type: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify(params),
+        success: response => {
+          disableSync.current = false
+          onSuccess(response, params.ops)
+        },
+      });
+    }
+
+    const sendChanges = React.useRef(_.debounce(doSendChanges, 200)).current
+
+    function onChange(e) {
+      let newText = e.target.value
+
+      operationRef.current = operationRef.current.compose(generateOperation(text, newText))
+      setText(newText)
+
+      sendChanges(({ data }, requestOps) => { sync(data.missing_ops, requestOps, data.revision) })
+    }
+
+    function sync(missionOps, requestOps, newRevision) {
+      if (disableSync.current) return
+      if (revisionRef.current >= newRevision) return
+
+      if (requestOps) textRef.current = ot.TextOperation.fromJSON(requestOps).apply(textRef.current)
+
+      if (missionOps) {
+        let composed = deepTransform(
+          [ot.TextOperation.fromJSON(missionOps)],
+          requestOps ? [ot.TextOperation.fromJSON(requestOps), operationRef.current] : [operationRef.current],
+        )
+        operationRef.current = composed[1]
+        textRef.current = composed[0].prev.apply(textRef.current)
+      }
+
+      setText(operationRef.current.apply(textRef.current))
+      revisionRef.current = newRevision
+    }
+
+    return (
+      <textarea style={{ width: '100%', height: 400 }} value={text} onChange={onChange}/>
+    )
+  }
+
+  ReactDOM.render(
+    <Editor defaultText="<%= j @text.html_safe %>" revision="<%= @revision %>" />,
+    document.getElementById('root'),
+  )
+
+</script>

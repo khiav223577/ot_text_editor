@@ -1,3 +1,7 @@
 Rails.application.routes.draw do
-  resources :documents, only: [:index]
+  resource :documents, only: [:show, :update] do
+    get :operation
+  end
+
+  mount ActionCable.server => '/cable'
 end
